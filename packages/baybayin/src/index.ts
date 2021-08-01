@@ -3,7 +3,7 @@
 import * as shiki from 'shiki';
 import { STYLESHEET, CARETS } from './styles';
 
-export interface BaybayinOptions {
+export interface EditorOptions {
   value?: string;
   languages: shiki.Lang[];
   themes: shiki.Theme[];
@@ -56,7 +56,7 @@ export class Editor {
 
   private cleanups: (() => void)[] = [];
 
-  constructor(target: HTMLElement, options: BaybayinOptions) {
+  constructor(target: HTMLElement, options: EditorOptions) {
     this.target = target;
     this.value = options.value ?? '';
     this.languages = [...options.languages];
