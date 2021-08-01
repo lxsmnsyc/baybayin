@@ -16,7 +16,10 @@
   },
   "license": "MIT",
   "keywords": [
-    "pridepack"
+    "pridepack",
+    "baybayin",
+    "code",
+    "editor"
   ],
   "name": "baybayin",
   "devDependencies": {
@@ -42,5 +45,16 @@
   "dependencies": {
     "cxs": "^6.2.0",
     "shiki": "^0.9.5"
-  }
+  },
+  "description": "A simple in-browser code editor",
+  "repository": "https://github.com/LXSMNSYC/baybayin.git",
+  "bugs": {
+    "url": "https://github.com/LXSMNSYC/baybayin/issues"
+  },
+  "homepage": "https://github.com/LXSMNSYC/baybayin/tree/main/packages/baybayin",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Alexis Munsayac <alexis.munsayac@gmail.com>",
+  "private": false
 }
