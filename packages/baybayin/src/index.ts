@@ -21,7 +21,11 @@ export const THEMES = shiki.BUNDLED_THEMES;
 
 export const LANGUAGES = shiki.BUNDLED_LANGUAGES.map((item) => item.id);
 
-export default class Baybayin {
+export function setCDN(cdnURL: string): void {
+  shiki.setCDN(cdnURL);
+}
+
+export class Editor {
   private ready = false;
 
   private highlighter?: shiki.Highlighter;
@@ -91,23 +95,32 @@ export default class Baybayin {
     // Create code
     if (!this.pre) {
       this.pre = document.createElement('pre');
-      this.pre.classList.add('baybayin__highlight', 'baybayin__flatten');
+      this.pre.classList.add('baybayin__highlight');
       this.wrapper.appendChild(this.pre);
     }
     // Create textarea
     if (!this.textarea) {
-      this.textarea = document.createElement('textarea');
-      this.textarea.classList.add('baybayin__textarea', 'baybayin__flatten');
-      this.wrapper.appendChild(this.textarea);
-      this.textarea.setAttribute('spellcheck', 'false');
-      this.textarea.setAttribute('autocomplete', 'off');
+      const textarea = document.createElement('textarea');
+      textarea.classList.add('baybayin__textarea');
+      textarea.setAttribute('spellcheck', 'false');
+      textarea.setAttribute('autocomplete', 'off');
+
+      const textareaWrapper = document.createElement('div');
+      textareaWrapper.classList.add('baybayin__textarea--wrapper');
+
+      textarea.addEventListener('input', () => {
+        textareaWrapper.dataset.replicatedValue = textarea.value;
+      });
+      textareaWrapper.appendChild(textarea);
+      this.wrapper.appendChild(textareaWrapper);
+      this.textarea = textarea;
       this.updateReadonly();
     }
     this.textarea.style.caretColor = CARETS[this.selectedTheme];
     // Highlight code
     if (this.highlighter) {
       this.pre.innerHTML = this.highlighter.codeToHtml(
-        `${this.value}\n`,
+        this.value,
         this.selectedLanguage,
         this.selectedTheme,
       );
@@ -198,7 +211,7 @@ export default class Baybayin {
     }
   }
 
-  toggleReadonly(flag: boolean): void {
+  setReadonly(flag: boolean): void {
     this.readonly = flag;
     this.updateReadonly();
   }
@@ -213,7 +226,7 @@ export default class Baybayin {
     }
   }
 
-  toggleLineNumbers(flag: boolean): void {
+  setLineNumbers(flag: boolean): void {
     this.lineNumbers = flag;
     this.updateLineNumbers();
   }
@@ -234,6 +247,10 @@ export default class Baybayin {
     }
   }
 
+  getValue(): string {
+    return this.value;
+  }
+
   private listenTextarea(): void {
     if (!this.textarea) {
       return;
@@ -252,13 +269,6 @@ export default class Baybayin {
       this.tabHandler(textarea, e);
       this.selfClosingHandler(textarea, e);
       this.newLineHandler(textarea, e);
-    });
-
-    textarea.addEventListener('scroll', () => {
-      if (!this.pre) {
-        return;
-      }
-      this.pre.style.transform = `translate3d(-${textarea.scrollLeft}px, -${textarea.scrollTop}px, 0)`;
     });
   }
 
@@ -369,7 +379,7 @@ export default class Baybayin {
       selectionEnd,
     } = textarea;
 
-    if (!Baybayin.skipCloseChar(textarea, char)) {
+    if (!Editor.skipCloseChar(textarea, char)) {
       let closeChar = char;
       switch (char) {
         case '(':
@@ -437,9 +447,5 @@ export default class Baybayin {
     } = textarea;
     const hasSelection = Math.abs(selectionEnd - selectionStart) > 0;
     return [')', '}', ']', '>'].includes(char) || (['\'', '"'].includes(char) && !hasSelection);
-  }
-
-  static setCDN(cdnURL: string): void {
-    shiki.setCDN(cdnURL);
   }
 }

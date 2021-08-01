@@ -25,28 +25,37 @@ export const CARETS: Record<shiki.Theme, 'white' | 'black'> = {
 };
 
 export const STYLESHEET: string = cxs({
-  position: 'absolute',
+  display: 'grid',
   width: '100%',
   height: '100%',
-  overflow: 'visible',
 
   '& *': {
     boxSizing: 'border-box',
   },
 
   '> .baybayin__highlight': {
+    gridArea: '1 / 1 / 2 / 2',
     padding: 0,
     margin: 0,
     pointerEvents: 'none',
-    overflow: 'visible',
-    width: '100%',
-    height: '100%',
+    whiteSpace: 'pre',
+    outline: 'none',
+    textAlign: 'left',
   },
-  '> .baybayin__textarea': {
-    paddingTop: '1rem',
-    paddingLeft: '1rem',
-    paddingRight: '1rem',
-    paddingBottom: '1rem',
+  '> .baybayin__textarea--wrapper': {
+    gridArea: '1 / 1 / 2 / 2',
+    display: 'grid',
+    marginTop: '1rem',
+    marginLeft: '1rem',
+    marginRight: '1rem',
+    marginBottom: '1rem',
+  },
+  '> .baybayin__textarea--wrapper::after': {
+    /* Note the weird space! Needed to preventy jumpy behavior */
+    content: 'attr(data-replicated-value) " "',
+    /* This is how textarea text behaves */
+    /* Hidden from view, clicks, and screen readers */
+    visibility: 'hidden',
     fontSize: '1em',
     fontWeight: 'normal',
     fontFamily: FONT_FAMILY,
@@ -54,17 +63,26 @@ export const STYLESHEET: string = cxs({
     background: 'none',
     border: 'none',
     color: 'transparent',
-    resize: 'none',
-    width: '100%',
-    height: '100%',
-  },
-  '> .baybayin__flatten': {
     whiteSpace: 'pre',
-    position: 'absolute',
-    top: '0',
-    left: '0',
     outline: 'none',
     textAlign: 'left',
+    gridArea: '1 / 1 / 2 / 2',
+  },
+  '> .baybayin__textarea--wrapper > .baybayin__textarea': {
+    padding: 0,
+    overflow: 'hidden',
+    resize: 'none',
+    fontSize: '1em',
+    fontWeight: 'normal',
+    fontFamily: FONT_FAMILY,
+    lineHeight: 'normal',
+    background: 'none',
+    border: 'none',
+    color: 'transparent',
+    whiteSpace: 'pre',
+    outline: 'none',
+    textAlign: 'left',
+    gridArea: '1 / 1 / 2 / 2',
   },
   '& .shiki': {
     margin: 0,
@@ -75,13 +93,12 @@ export const STYLESHEET: string = cxs({
   '& .shiki > code': {
     margin: '1rem',
     display: 'inline-block',
-    width: '100%',
     height: 'auto',
     counterReset: 'step',
     counterIncrement: 'step 0',
   },
-  '&.baybayin__line-numbers > .baybayin__textarea': {
-    paddingLeft: '3.5rem',
+  '&.baybayin__line-numbers > .baybayin__textarea--wrapper': {
+    marginLeft: '3.5rem',
   },
   '&.baybayin__line-numbers .shiki > code': {
     counterReset: 'step',
