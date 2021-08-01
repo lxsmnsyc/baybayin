@@ -49,13 +49,13 @@ editor.load().then(() => {
 ### Updating config
 
 ```js
-// Loads or push a language, returns a Promises
+// Loads or push a language, returns a Promise
 editor.loadLanguage('tsx');
-// Loads or push a theme, returns a Promises
+// Loads or push a theme, returns a Promise
 editor.loadTheme('monokai');
-// Selects the language to use, returns a Promises
+// Selects the language to use, returns a Promise
 editor.setLanguage('typescript');
-// Selects the theme to use, returns a Promises
+// Selects the theme to use, returns a Promise
 editor.setTheme('github-dark');
 
 // Toggle readonly
@@ -79,6 +79,12 @@ const currentValue = editor.getValue();
 const unsubscribe = editor.onChange((newValue) => {
   console.log('Received', newValue);
 });
+```
+
+### Destroying the editor
+
+```js
+editor.destroy();
 ```
 
 ## License
