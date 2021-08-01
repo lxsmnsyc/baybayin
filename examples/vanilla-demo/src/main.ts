@@ -59,13 +59,6 @@ if (element) {
     name: 'Baybayin Settings',
   });
 
-  // element.appendChild(gui.domElement);
-
-  // gui.domElement.style.position = 'sticky';
-  // gui.domElement.style.top = '0px';
-  // gui.domElement.style.right = '0px';
-  // gui.domElement.style.zIndex = '50';
-
   gui.add(opts, 'language', baybayin.LANGUAGES).onChange((value) => {
     editor.setLanguage(value);
   });
