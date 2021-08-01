@@ -40,7 +40,7 @@ export class Editor {
 
   private tabSize: number;
 
-  private lineNumbers?: boolean;
+  private lineNumbers: boolean;
 
   private handleTabs: boolean;
 
@@ -53,6 +53,8 @@ export class Editor {
   private selectedLanguage: shiki.Lang;
 
   private selectedTheme: shiki.Theme;
+
+  private cleanups: (() => void)[] = [];
 
   constructor(target: HTMLElement, options: BaybayinOptions) {
     this.target = target;
@@ -81,22 +83,35 @@ export class Editor {
         themes: this.themes,
         langs: this.languages,
       });
+      this.cleanups.push(() => {
+        this.highlighter = undefined;
+      });
     }
   }
 
   private setupEditor() {
     // Create editor wrapper
     if (!this.wrapper) {
-      this.wrapper = document.createElement('div');
-      this.wrapper.classList.add('baybayin', ...STYLESHEET.split(' '));
-      this.target.appendChild(this.wrapper);
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('baybayin', ...STYLESHEET.split(' '));
+      this.target.appendChild(wrapper);
+      this.wrapper = wrapper;
       this.updateLineNumbers();
+      this.cleanups.push(() => {
+        this.wrapper = undefined;
+        wrapper.parentNode?.removeChild(wrapper);
+      });
     }
     // Create code
     if (!this.pre) {
-      this.pre = document.createElement('pre');
-      this.pre.classList.add('baybayin__highlight');
-      this.wrapper.appendChild(this.pre);
+      const pre = document.createElement('pre');
+      pre.classList.add('baybayin__highlight');
+      this.wrapper.appendChild(pre);
+      this.pre = pre;
+      this.cleanups.push(() => {
+        this.pre = undefined;
+        this.wrapper?.removeChild(pre);
+      });
     }
     // Create textarea
     if (!this.textarea) {
@@ -107,14 +122,22 @@ export class Editor {
 
       const textareaWrapper = document.createElement('div');
       textareaWrapper.classList.add('baybayin__textarea--wrapper');
-
-      textarea.addEventListener('input', () => {
+      const update = () => {
         textareaWrapper.dataset.replicatedValue = textarea.value;
-      });
+      };
+      textarea.addEventListener('input', update);
       textareaWrapper.appendChild(textarea);
       this.wrapper.appendChild(textareaWrapper);
       this.textarea = textarea;
       this.updateReadonly();
+
+      this.cleanups.push(() => {
+        textareaWrapper.removeChild(textarea);
+        this.wrapper?.removeChild(textareaWrapper);
+        textarea.removeEventListener('input', update);
+
+        this.textarea = undefined;
+      });
     }
     this.textarea.style.caretColor = CARETS[this.selectedTheme];
     // Highlight code
@@ -258,17 +281,24 @@ export class Editor {
 
     const { textarea } = this;
 
-    textarea.addEventListener('input', () => {
+    const onInput = () => {
       this.setValue(textarea.value);
-    });
+    };
+    textarea.addEventListener('input', onInput);
 
-    textarea.addEventListener('keydown', (e) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (this.readonly) {
         return;
       }
       this.tabHandler(textarea, e);
       this.selfClosingHandler(textarea, e);
       this.newLineHandler(textarea, e);
+    };
+    textarea.addEventListener('keydown', onKeyDown);
+
+    this.cleanups.push(() => {
+      textarea.removeEventListener('input', onInput);
+      textarea.removeEventListener('keydown', onKeyDown);
     });
   }
 
@@ -399,7 +429,7 @@ export class Editor {
     } else {
       const skipChar = this.value.substr(selectionEnd, 1) === char;
       const newSelectionEnd = skipChar ? selectionEnd + 1 : selectionEnd;
-      const closeChar = !skipChar && ['\'', '"'].includes(char) ? char : '';
+      const closeChar = (!skipChar && (char === '\'' || char === '"')) ? char : '';
       const newCode = `${this.value.substring(0, selectionStart)}${closeChar}${this.value.substring(newSelectionEnd)}`;
       this.setValue(newCode);
       textarea.selectionStart += 1;
@@ -446,6 +476,22 @@ export class Editor {
       selectionEnd,
     } = textarea;
     const hasSelection = Math.abs(selectionEnd - selectionStart) > 0;
-    return [')', '}', ']', '>'].includes(char) || (['\'', '"'].includes(char) && !hasSelection);
+    switch (char) {
+      case ')':
+      case '}':
+      case ']':
+      case '>':
+        return true;
+      default:
+        return ((char === '\'' || char === '"') && !hasSelection);
+    }
+  }
+
+  destroy(): void {
+    this.cleanups.forEach((cleanup) => {
+      cleanup();
+    });
+    this.cleanups = [];
+    this.ready = false;
   }
 }
