@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@lyonph/preact-hooks": "^0.5.1",
-    "baybayin": "^0.0.0"
+    "baybayin": "0.0.0"
   },
   "description": "A simple in-browser code editor",
   "repository": "https://github.com/LXSMNSYC/baybayin.git",
