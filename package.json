@@ -1,5 +1,5 @@
 {
-  "name": "compostate-workspace",
+  "name": "baybayin-workspace",
   "private": true,
   "workspaces": [
     "packages/*",
@@ -22,16 +22,16 @@
     "lerna": "^4.0.0"
   },
   "version": "0.1.0",
-  "description": "Contextual State Management",
+  "description": "A simple in-browser code editor",
   "main": "index.js",
   "author": "Alexis Munsayac <alexis.munsayac@gmail.com>",
   "license": "MIT",
   "repository": {
-    "url": "https://github.com/lxsmnsyc/compostate.git",
+    "url": "https://github.com/lxsmnsyc/baybayin.git",
     "type": "git"
   },
-  "homepage": "https://github.com/lxsmnsyc/compostate",
+  "homepage": "https://github.com/lxsmnsyc/baybayin",
   "bugs": {
-    "url": "https://github.com/lxsmnsyc/compostate/issues"
+    "url": "https://github.com/lxsmnsyc/baybayin/issues"
   }
 }
