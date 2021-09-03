@@ -23,8 +23,6 @@
   ],
   "name": "baybayin",
   "devDependencies": {
-    "@types/cxs": "^6.2.1",
-    "@types/jest": "^26.0.24",
     "@types/node": "^16.4.7",
     "eslint": "^7.31.0",
     "eslint-config-lxsmnsyc": "^0.2.3",
@@ -42,7 +40,7 @@
     "watch": "pridepack watch"
   },
   "dependencies": {
-    "cxs": "^6.2.0",
+    "goober": "^2.0.41",
     "shiki": "^0.9.5"
   },
   "description": "A simple in-browser code editor",
