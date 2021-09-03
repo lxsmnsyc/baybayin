@@ -1,12 +1,32 @@
-/* eslint-disable no-param-reassign */
-/* eslint-disable prefer-destructuring */
 import * as shiki from 'shiki';
-import { STYLESHEET, CARETS } from './styles';
+import STYLESHEET from './styles';
+import template from './template';
+
+interface EditorTemplates {
+  root: HTMLElement;
+  pre: HTMLElement;
+  textareaWrapper: HTMLElement;
+  textarea: HTMLElement;
+}
+
+let TEMPLATES: EditorTemplates;
+
+function getTemplates() {
+  if (!TEMPLATES) {
+    TEMPLATES = {
+      root: template('<div class="baybayin"></div>'),
+      pre: template('<pre class="baybayin__highlight"></pre>'),
+      textareaWrapper: template('<div class="baybayin__textarea--wrapper"></div>'),
+      textarea: template('<textarea class="baybayin__textarea" spellcheck="false" autocomplete="off"></textarea>'),
+    };
+  }
+  return TEMPLATES;
+}
 
 export interface EditorOptions {
   value?: string;
-  languages: shiki.Lang[];
-  themes: shiki.Theme[];
+  languages: Language[];
+  themes: Theme[];
   readonly?: boolean;
   tabSize?: number;
   handleTabs?: boolean;
@@ -21,6 +41,22 @@ export const THEMES = shiki.BUNDLED_THEMES;
 
 export const LANGUAGES = shiki.BUNDLED_LANGUAGES.map((item) => item.id);
 
+export type Language = shiki.Lang | shiki.ILanguageRegistration;
+export type Theme = shiki.IThemeRegistration;
+
+function getLanguageID(lang: Language): string {
+  if (typeof lang === 'string') {
+    return lang;
+  }
+  return lang.id;
+}
+function getThemeID(theme: Theme): string {
+  if (typeof theme === 'string') {
+    return theme;
+  }
+  return theme.name;
+}
+
 export function setCDN(cdnURL: string): void {
   shiki.setCDN(cdnURL);
 }
@@ -32,9 +68,9 @@ export class Editor {
 
   private target: HTMLElement;
 
-  private languages: shiki.Lang[];
+  private languages: Language[];
 
-  private themes: shiki.Theme[];
+  private themes: Theme[];
 
   private readonly: boolean;
 
@@ -50,9 +86,9 @@ export class Editor {
 
   private value: string;
 
-  private selectedLanguage: shiki.Lang;
+  private selectedLanguage: Language;
 
-  private selectedTheme: shiki.Theme;
+  private selectedTheme: Theme;
 
   private cleanups: (() => void)[] = [];
 
@@ -90,10 +126,11 @@ export class Editor {
   }
 
   private setupEditor() {
+    const templates = getTemplates();
     // Create editor wrapper
     if (!this.wrapper) {
-      const wrapper = document.createElement('div');
-      wrapper.classList.add('baybayin', ...STYLESHEET.split(' '));
+      const wrapper = templates.root.cloneNode(true) as HTMLDivElement;
+      wrapper.classList.add(...STYLESHEET.split(' '));
       this.target.appendChild(wrapper);
       this.wrapper = wrapper;
       this.updateLineNumbers();
@@ -104,8 +141,7 @@ export class Editor {
     }
     // Create code
     if (!this.pre) {
-      const pre = document.createElement('pre');
-      pre.classList.add('baybayin__highlight');
+      const pre = templates.pre.cloneNode(true) as HTMLPreElement;
       this.wrapper.appendChild(pre);
       this.pre = pre;
       this.cleanups.push(() => {
@@ -115,13 +151,8 @@ export class Editor {
     }
     // Create textarea
     if (!this.textarea) {
-      const textarea = document.createElement('textarea');
-      textarea.classList.add('baybayin__textarea');
-      textarea.setAttribute('spellcheck', 'false');
-      textarea.setAttribute('autocomplete', 'off');
-
-      const textareaWrapper = document.createElement('div');
-      textareaWrapper.classList.add('baybayin__textarea--wrapper');
+      const textarea = templates.textarea.cloneNode(true) as HTMLTextAreaElement;
+      const textareaWrapper = templates.textareaWrapper.cloneNode(true) as HTMLDivElement;
       const update = () => {
         textareaWrapper.dataset.replicatedValue = textarea.value;
       };
@@ -132,20 +163,20 @@ export class Editor {
       this.updateReadonly();
 
       this.cleanups.push(() => {
-        textareaWrapper.removeChild(textarea);
         this.wrapper?.removeChild(textareaWrapper);
         textarea.removeEventListener('input', update);
 
         this.textarea = undefined;
       });
     }
-    this.textarea.style.caretColor = CARETS[this.selectedTheme];
     // Highlight code
     if (this.highlighter) {
+      const theme = getThemeID(this.selectedTheme);
+      this.textarea.style.caretColor = this.highlighter.getForegroundColor(theme);
       this.pre.innerHTML = this.highlighter.codeToHtml(
         this.value,
-        this.selectedLanguage,
-        this.selectedTheme,
+        getLanguageID(this.selectedLanguage),
+        theme,
       );
     }
   }
@@ -166,7 +197,7 @@ export class Editor {
     this.ready = true;
   }
 
-  async loadLanguage(lang: shiki.Lang): Promise<void> {
+  async loadLanguage(lang: Language): Promise<void> {
     // If the editor hasn't loaded yet,
     // append the new language to the list
     if (this.highlighter) {
@@ -176,7 +207,7 @@ export class Editor {
     }
   }
 
-  async loadTheme(theme: shiki.Theme): Promise<void> {
+  async loadTheme(theme: Theme): Promise<void> {
     // If the editor hasn't loaded yet,
     // append the new theme to the list
     if (this.highlighter) {
@@ -186,7 +217,7 @@ export class Editor {
     }
   }
 
-  async setLanguage(lang: shiki.Lang): Promise<void> {
+  async setLanguage(lang: Language): Promise<void> {
     // Make sure that the language is loaded first
     await this.loadLanguage(lang);
     this.selectedLanguage = lang;
@@ -195,7 +226,7 @@ export class Editor {
     this.refresh();
   }
 
-  async setTheme(theme: shiki.Theme): Promise<void> {
+  async setTheme(theme: Theme): Promise<void> {
     // Make sure that the theme is loaded first
     await this.loadTheme(theme);
     this.selectedTheme = theme;
@@ -218,9 +249,9 @@ export class Editor {
 
   private notifyChange(value: string): void {
     if (this.listeners?.size) {
-      new Set(this.listeners).forEach((listener) => {
+      for (const listener of this.listeners.keys()) {
         listener(value);
-      });
+      }
     }
   }
 
@@ -241,11 +272,7 @@ export class Editor {
 
   private updateLineNumbers(): void {
     if (this.wrapper) {
-      if (this.lineNumbers) {
-        this.wrapper.classList.add('baybayin__line-numbers');
-      } else {
-        this.wrapper.classList.remove('baybayin__line-numbers');
-      }
+      this.wrapper.classList.toggle('baybayin__line-numbers', this.lineNumbers);
     }
   }
 
@@ -315,8 +342,8 @@ export class Editor {
       selectionDirection,
       selectionStart,
       selectionEnd,
-      value,
     } = textarea;
+    let value = textarea.value;
 
     let beforeSelection = value.substr(0, selectionStart);
     let selectionVal = value.substring(selectionStart, selectionEnd);
@@ -369,19 +396,18 @@ export class Editor {
       }
 
       // Set new indented value
-      textarea.value = beforeSelection + selectionVal + afterSelection;
-
+      value = beforeSelection + selectionVal + afterSelection;
       textarea.selectionStart = selectionStart + startIndentLen;
       textarea.selectionEnd = selectionStart + selectionVal.length + endIndentLen;
       textarea.selectionDirection = selectionDirection;
     } else {
-      textarea.value = beforeSelection + indent + afterSelection;
+      value = beforeSelection + indent + afterSelection;
       textarea.selectionStart = selectionStart + indent.length;
       textarea.selectionEnd = selectionStart + indent.length;
     }
 
-    const newCode = textarea.value;
-    this.setValue(newCode);
+    textarea.value = value;
+    this.setValue(value);
     textarea.selectionEnd = selectionEnd + this.tabSize;
   }
 
@@ -488,9 +514,9 @@ export class Editor {
   }
 
   destroy(): void {
-    this.cleanups.forEach((cleanup) => {
-      cleanup();
-    });
+    for (let i = 0, len = this.cleanups.length; i < len; i += 1) {
+      this.cleanups[i]();
+    }
     this.cleanups = [];
     this.ready = false;
   }
