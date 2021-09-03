@@ -14,6 +14,9 @@ module.exports = {
       }
     ],
     "@typescript-eslint/no-unsafe-return": "off",
-    "@typescript-eslint/no-unsafe-assignment": "off"
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "no-restricted-syntax": "off",
+    "prefer-destructuring": "off",
+    "no-param-reassign": "off"
   }
 };

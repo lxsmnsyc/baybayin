@@ -12,6 +12,8 @@ import * as baybayin from 'baybayin';
 
 const element = document.getElementById('app');
 
+baybayin.setCDN('https://unpkg.com/shiki/');
+
 if (element) {
   const editor = new baybayin.Editor(element, {
     value: "console.log('Hello World');",
@@ -21,7 +23,7 @@ if (element) {
 }
 \`;
 
-Baybayin.setCDN('https://unpkg.com/shiki/');
+baybayin.setCDN('https://unpkg.com/shiki/');
 
 if (element) {
   const editor = new baybayin.Editor(element, {
